@@ -64,11 +64,7 @@ final class StorageManager {
         if let _ = try? context.fetch(fetchData) {
                 context.delete(object)
             }
-        do{
-            try context.save()
-        } catch {
-            print(error.localizedDescription)
-        }
+       saveContext()
     }
     
     func updateData(for title: String, indexPath: Int) {
@@ -76,11 +72,6 @@ final class StorageManager {
             let result = fetchResults[indexPath]
             result.setValue(title, forKey: "title")
             }
-            do{
-            try context.save()
-            
-        } catch {
-            print(error.localizedDescription)
-        }
+        saveContext()
     }
 }

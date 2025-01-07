@@ -92,7 +92,8 @@ final class TaskListViewController: UITableViewController {
         ) { [unowned self] in
             storageManager.updateData(for: text, indexPath: indexPath.row)
             fetchData()
-            tableView.reloadData()
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+            tableView.deselectRow(at: indexPath, animated: true)
         }
     }
 }
@@ -111,10 +112,6 @@ extension TaskListViewController {
         cell.contentConfiguration = content
         return cell
     }
-     
-    override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
-        return .delete
-    }
 }
 
 // MARK: - UITableViewDelegate
@@ -125,7 +122,7 @@ extension TaskListViewController {
             taskList.remove(at: indexPath.row)
             storageManager.deleteData(for: task)
             tableView.deleteRows(at: [indexPath], with: .automatic)
-            tableView.reloadData()
+            tableView.reloadRows(at: [indexPath], with: .automatic)
             }
         }
 }
