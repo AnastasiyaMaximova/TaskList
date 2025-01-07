@@ -92,7 +92,6 @@ final class TaskListViewController: UITableViewController {
         ) { [unowned self] in
             storageManager.updateData(for: text, indexPath: indexPath.row)
             fetchData()
-            print(text)
             tableView.reloadData()
         }
     }
