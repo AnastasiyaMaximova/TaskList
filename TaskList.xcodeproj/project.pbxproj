@@ -318,7 +318,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = GBTTU32HS2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = TaskList/Info.plist;
+				INFOPLIST_FILE = TaskList/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
@@ -351,7 +351,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = GBTTU32HS2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = TaskList/Info.plist;
+				INFOPLIST_FILE = TaskList/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;

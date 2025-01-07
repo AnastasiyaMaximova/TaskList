@@ -8,9 +8,12 @@
 import UIKit
 
 final class TaskListViewController: UITableViewController {
+    
     private var taskList: [ToDoTask] = []
+    private let storageManager = StorageManager.shared
     private let cellID = "task"
-
+    private var text = ""
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -20,45 +23,78 @@ final class TaskListViewController: UITableViewController {
     }
     
     @objc private func addNewTask() {
-        showAlert(withTitle: "New Task", andMessage: "What do you want to do?")
+        showAlert(
+            withTitle: "New Task",
+            andMessage: "What do you want to do?",
+            actionButtonTitle: "OK") {[unowned self] in
+                save(text)
+            }
     }
     
     private func fetchData() {
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        let fetchRequest = ToDoTask.fetchRequest()
-        
-        do {
-            taskList = try appDelegate.persistentContainer.viewContext.fetch(fetchRequest)
-        } catch {
-            print(error)
+        storageManager.fetchData { [weak self] result in
+            guard let self else {return}
+            switch result {
+            case .success(let task):
+                taskList = task
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
         }
-    }
-    
-    private func showAlert(withTitle title: String, andMessage message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        let okAction = UIAlertAction(title: "OK", style: .default) { [unowned self] _ in
-            guard let inputText = alert.textFields?.first?.text, !inputText.isEmpty else { return }
-            save(inputText)
-        }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
-        alert.addAction(okAction)
-        alert.addAction(cancelAction)
-        alert.addTextField { textField in
-            textField.placeholder = "New Task"
-        }
-        present(alert, animated: true)
     }
     
     private func save(_ taskName: String) {
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        let task = ToDoTask(context: appDelegate.persistentContainer.viewContext)
-        task.title = taskName
-        taskList.append(task)
-        
-        let indexPath = IndexPath(row: taskList.count - 1, section: 0)
-        tableView.insertRows(at: [indexPath], with: .automatic)
-        
-        appDelegate.saveContext()
+        storageManager.saveData(withTitle: taskName) { [weak self] result in
+            guard let self else {return}
+            switch result {
+            case .success (let task):
+                taskList.append(task)
+                let indexPath = IndexPath(row: taskList.count - 1, section: 0)
+                tableView.insertRows(at: [indexPath], with: .automatic)
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
+    }
+    
+    private func showAlert(
+        withTitle title: String,
+        andMessage message: String,
+        actionButtonTitle: String,
+        indexPath: Int? = nil,
+        completion: (()-> Void)? = nil
+    ){
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let actionButton = UIAlertAction(title: actionButtonTitle, style: .default) {[unowned self] _ in
+            guard let inputText = alert.textFields?.first?.text, !inputText.isEmpty else { return }
+            text = inputText
+            completion?()
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
+        alert.addAction(actionButton)
+        alert.addAction(cancelAction)
+        alert.addTextField {[weak self] textField in
+            guard let self else {return}
+            textField.placeholder = "New Task"
+            guard let indexPath = indexPath else {return}
+            textField.text = taskList[indexPath].title
+        }
+        present(alert, animated: true)
+        return
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        showAlert(
+            withTitle: "Edit Task",
+            andMessage: "What do you want to do?",
+            actionButtonTitle: "Save",
+            indexPath: indexPath.row
+        ) { [unowned self] in
+            storageManager.updateData(for: text, indexPath: indexPath.row)
+            fetchData()
+            print(text)
+            tableView.reloadData()
+        }
     }
 }
 
@@ -76,6 +112,23 @@ extension TaskListViewController {
         cell.contentConfiguration = content
         return cell
     }
+     
+    override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        return .delete
+    }
+}
+
+// MARK: - UITableViewDelegate
+extension TaskListViewController {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let task = taskList[indexPath.row]
+            taskList.remove(at: indexPath.row)
+            storageManager.deleteData(for: task)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+            tableView.reloadData()
+            }
+        }
 }
 
 // MARK: - Setup UI
@@ -87,8 +140,7 @@ private extension TaskListViewController {
         // Navigation bar appearance
         let navBarAppearance = UINavigationBarAppearance()
         
-        navBarAppearance.backgroundColor = .milkBlue
-        
+        navBarAppearance.backgroundColor = UIColor(named: "MilkBlue")
         navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         navBarAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         
@@ -101,7 +153,6 @@ private extension TaskListViewController {
             target: self,
             action: #selector(addNewTask)
         )
-        
         navigationController?.navigationBar.tintColor = .white
     }
 }
